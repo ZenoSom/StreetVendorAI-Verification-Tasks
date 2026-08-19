@@ -2,3 +2,4 @@ backend/venv/
 backend/__pycache__/
 backend/*.pyc
 backend/streetvendor.db
+streetvendor.db

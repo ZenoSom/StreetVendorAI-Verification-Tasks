@@ -20,7 +20,7 @@ function App() {
   const [yesterdaySales, setYesterdaySales] = useState("");
   const [forecast, setForecast] = useState(null);
   const [forecastLoading, setForecastLoading] = useState(false);
-  
+
   const [currentStock, setCurrentStock] = useState("");
   const [inventoryPlan, setInventoryPlan] = useState(null);
   const [inventoryLoading, setInventoryLoading] = useState(false);
@@ -225,7 +225,7 @@ const getInventoryPlan = async () => {
   }
 };
 
-  
+
 
   // ---------------- DASHBOARD ----------------
 
@@ -533,13 +533,13 @@ const getInventoryPlan = async () => {
 
           <button className="scheme-btn">
             onClick={() => setShowSchemes((visible) => !visible)}
-          
+
             {showSchemes ? "Hide Schemes ↑" : "Explore Schemes →"}
           </button>
 
         </section>
 
-        
+
         <section className="card">
 
           <div className="section-title">

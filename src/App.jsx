@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import "./App.css";
 
 function App() {
@@ -526,6 +527,36 @@ function App() {
               <div style={{ fontSize: "40px", marginBottom: "16px" }}>👋</div>
               <h3 style={{ color: "var(--color-slate-900)" }}>Welcome to your Dashboard</h3>
               <p style={{ color: "var(--color-slate-500)", fontSize: "14px", marginTop: "8px" }}>Record your first sale on the left to unlock AI predictions for tomorrow.</p>
+            </div>
+          )}
+
+          {salesHistory.length > 0 && (
+            <div className="glass-panel" style={{ marginBottom: "24px" }}>
+              <h2 className="panel-title">📈 Sales & Revenue Trend (Last 90 Days)</h2>
+              <div style={{ width: "100%", height: "250px", marginTop: "16px" }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={[...salesHistory].reverse().map(sale => ({
+                    date: new Date(sale.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
+                    revenue: sale.revenue_amount,
+                    units: sale.units_sold
+                  }))}>
+                    <defs>
+                      <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="var(--color-brand-500)" stopOpacity={0.8}/>
+                        <stop offset="95%" stopColor="var(--color-brand-500)" stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <XAxis dataKey="date" stroke="var(--color-slate-400)" fontSize={12} tickLine={false} axisLine={false} minTickGap={30} />
+                    <YAxis stroke="var(--color-slate-400)" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(val) => `₹${val}`} />
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border-light)" />
+                    <Tooltip 
+                      contentStyle={{ borderRadius: '8px', border: '1px solid var(--border-light)', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', background: 'rgba(255, 255, 255, 0.9)', backdropFilter: 'blur(8px)' }}
+                      formatter={(value, name) => [name === 'revenue' ? `₹${value}` : value, name === 'revenue' ? 'Revenue' : 'Units Sold']}
+                    />
+                    <Area type="monotone" dataKey="revenue" stroke="var(--color-brand-500)" strokeWidth={3} fillOpacity={1} fill="url(#colorRevenue)" activeDot={{ r: 6, fill: "var(--color-brand-500)", stroke: "white", strokeWidth: 2 }} />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
             </div>
           )}
 

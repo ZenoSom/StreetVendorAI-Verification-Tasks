@@ -45,6 +45,17 @@ except ImportError:
 # Create database tables
 models.Base.metadata.create_all(bind=engine)
 
+# Auto-seed database if empty (Crucial for Vercel Serverless environment where /tmp db resets)
+try:
+    db = next(get_db())
+    if not db.query(models.Vendor).first():
+        print("Database is empty. Auto-seeding Demo data...")
+        import seed_data
+        seed_data.seed_data()
+        seed_data.seed_hub_data()
+except Exception as e:
+    print(f"Auto-seed failed: {e}")
+
 is_vercel = os.getenv("VERCEL") == "1"
 app = FastAPI(
     title="StreetVendorAI API",

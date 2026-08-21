@@ -9,8 +9,7 @@
 
 In India, street vendors form the backbone of local commerce. However, they face a massive operational hurdle: **Information and operations are entirely scattered.** 
 
-*"Ek street vendor ko अलग-अलग काम के लिए अलग जगह जाना पड़ता है..."* 
-(A street vendor has to go to different places for different tasks...)
+*A street vendor typically has to visit multiple different government offices, wholesale markets, and use several scattered apps just to manage their daily tasks.*
 
 - **Finance:** Managing daily cash and UPI transactions manually is chaotic.
 - **Sourcing:** Finding reliable, affordable wholesale suppliers relies strictly on word-of-mouth.

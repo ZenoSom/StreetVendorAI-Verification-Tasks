@@ -2,14 +2,24 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
 
-import models
-from database import get_db
-from schemas import (
-    GovernmentSchemeResponse,
-    TrainingProgramResponse,
-    SupplierCatalogResponse,
-    LicenseGuideResponse
-)
+try:
+    from api import models
+    from api.database import get_db
+    from api.schemas import (
+        GovernmentSchemeResponse,
+        TrainingProgramResponse,
+        SupplierCatalogResponse,
+        LicenseGuideResponse
+    )
+except ImportError:
+    import models
+    from database import get_db
+    from schemas import (
+        GovernmentSchemeResponse,
+        TrainingProgramResponse,
+        SupplierCatalogResponse,
+        LicenseGuideResponse
+    )
 
 router = APIRouter(
     prefix="/hub",

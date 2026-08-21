@@ -11,20 +11,36 @@ import uuid
 import random
 from pydantic import BaseModel
 
-import models
-from database import engine, get_db
-from schemas import (
-    VendorCreate, VendorResponse,
-    SaleRecordCreate, SaleRecordResponse,
-    ForecastInput, InventoryInput,
-    FinanceInput, FinanceResponse,
-    PurchaseOrderCreate, PurchaseOrderResponse,
-    MarketAccessResponse, SchemeItem,
-    DeliveryRequest, DeliveryResponse,
-    UPITransactionResponse
-)
-from ml_forecaster import calculate_statistical_forecast, fetch_live_weather
-from vendor_hub import router as vendor_hub_router
+try:
+    from api import models
+    from api.database import engine, get_db
+    from api.schemas import (
+        VendorCreate, VendorResponse,
+        SaleRecordCreate, SaleRecordResponse,
+        ForecastInput, InventoryInput,
+        FinanceInput, FinanceResponse,
+        PurchaseOrderCreate, PurchaseOrderResponse,
+        MarketAccessResponse, SchemeItem,
+        DeliveryRequest, DeliveryResponse,
+        UPITransactionResponse
+    )
+    from api.ml_forecaster import calculate_statistical_forecast, fetch_live_weather
+    from api.vendor_hub import router as vendor_hub_router
+except ImportError:
+    import models
+    from database import engine, get_db
+    from schemas import (
+        VendorCreate, VendorResponse,
+        SaleRecordCreate, SaleRecordResponse,
+        ForecastInput, InventoryInput,
+        FinanceInput, FinanceResponse,
+        PurchaseOrderCreate, PurchaseOrderResponse,
+        MarketAccessResponse, SchemeItem,
+        DeliveryRequest, DeliveryResponse,
+        UPITransactionResponse
+    )
+    from ml_forecaster import calculate_statistical_forecast, fetch_live_weather
+    from vendor_hub import router as vendor_hub_router
 
 # Create database tables
 models.Base.metadata.create_all(bind=engine)

@@ -6,17 +6,17 @@
     },
     {
       "src": "package.json",
-      "use": "@vercel/vite"
+      "use": "@vercel/static-build"
     }
   ],
-  "routes": [
+  "rewrites": [
     {
-      "src": "/api/(.*)",
-      "dest": "api/main.py"
+      "source": "/api/(.*)",
+      "destination": "/api/main.py"
     },
     {
-      "src": "/(.*)",
-      "dest": "/index.html"
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
   ]
 }

@@ -82,35 +82,42 @@ def seed_data():
     db.commit()
     print("Added sample Purchase Orders!")
 
-    # Add recent UPI transactions
-    # 2 Bulk Orders
-    for _ in range(2):
-        db.add(models.UPITransaction(
-            vendor_id=vendor.id,
-            transaction_id=f"UPI{uuid.uuid4().hex[:12].upper()}",
-            payer_name=random.choice(["Sanjay Events Co.", "Tech Park Catering", "City Wedding Planners"]),
-            payer_vpa=f"corporate{random.randint(1,99)}@okhdfcbank",
-            amount=random.choice([8500.0, 5400.0, 12000.0, 7500.0]),
-            items_sold=f"Bulk Catering Order: {random.randint(100, 300)}x Items",
-            status="SUCCESS",
-            timestamp=today - datetime.timedelta(hours=random.randint(1, 48))
-        ))
+    # Add recent UPI transactions for every day in the last 90 days
+    # This creates a deeply rich historical log for the Calendar feature
+    for i in range(90):
+        current_date = today - datetime.timedelta(days=i)
+        
+        # 1 Bulk Order per day (randomly 30% chance)
+        if random.random() < 0.3:
+            db.add(models.UPITransaction(
+                vendor_id=vendor.id,
+                transaction_id=f"UPI{uuid.uuid4().hex[:12].upper()}",
+                payer_name=random.choice(["Sanjay Events Co.", "Tech Park Catering", "City Wedding Planners", "Local NGO"]),
+                payer_vpa=f"corporate{random.randint(1,99)}@okhdfcbank",
+                amount=random.choice([8500.0, 5400.0, 12000.0, 7500.0]),
+                items_sold=f"Bulk Catering Order: {random.randint(100, 300)}x Items",
+                status="SUCCESS",
+                timestamp=current_date - datetime.timedelta(hours=random.randint(8, 18))
+            ))
 
-    # 15 Normal Transactions
-    for _ in range(15):
-        qty = random.randint(1, 4)
-        db.add(models.UPITransaction(
-            vendor_id=vendor.id,
-            transaction_id=f"UPI{uuid.uuid4().hex[:12].upper()}",
-            payer_name=random.choice(["Rahul", "Sneha", "Amit", "Priya", "Vikram", "Anjali", "Rohan", "Neha", "Karan"]),
-            payer_vpa=f"user{random.randint(100,999)}@{random.choice(['okhdfcbank', 'okicici', 'paytm', 'ybl'])}",
-            amount=random.choice([20.0, 30.0, 40.0, 50.0, 60.0, 100.0, 120.0, 150.0]),
-            items_sold=f"{qty}x Tea, {random.randint(0,2)}x Coffee, {random.randint(0,3)}x Snacks",
-            status="SUCCESS",
-            timestamp=today - datetime.timedelta(minutes=random.randint(5, 1440))
-        ))
+        # 5-15 Normal Transactions per day
+        daily_txns = random.randint(5, 15)
+        for _ in range(daily_txns):
+            qty = random.randint(1, 4)
+            payment_mode = random.choice(["UPI", "UPI", "UPI", "CASH"]) # 25% cash probability for realistic logs
+            db.add(models.UPITransaction(
+                vendor_id=vendor.id,
+                transaction_id=f"TXN{uuid.uuid4().hex[:12].upper()}",
+                payer_name="Cash Customer" if payment_mode == "CASH" else random.choice(["Rahul", "Sneha", "Amit", "Priya", "Vikram", "Anjali", "Rohan", "Neha", "Karan"]),
+                payer_vpa="CASH" if payment_mode == "CASH" else f"user{random.randint(100,999)}@{random.choice(['okhdfcbank', 'okicici', 'paytm', 'ybl'])}",
+                amount=random.choice([20.0, 30.0, 40.0, 50.0, 60.0, 100.0, 120.0, 150.0]),
+                items_sold=f"{qty}x Tea, {random.randint(0,2)}x Coffee, {random.randint(0,3)}x Snacks",
+                status="SUCCESS",
+                timestamp=current_date - datetime.timedelta(minutes=random.randint(5, 1440))
+            ))
+            
     db.commit()
-    print("Added sample UPI Transactions!")
+    print("Added deep 90-day history of sample UPI/Cash Transactions!")
 
 def seed_hub_data():
     db = next(get_db())

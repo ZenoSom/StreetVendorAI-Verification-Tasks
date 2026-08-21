@@ -126,6 +126,20 @@ class CashTransactionCreate(BaseModel):
     amount: float
     items_sold: str
 
+@app.get("/transactions/{vendor_id}", response_model=List[UPITransactionResponse])
+def get_transactions(vendor_id: int, date: Optional[str] = Query(None), db: Session = Depends(get_db)):
+    query = db.query(models.UPITransaction).filter(models.UPITransaction.vendor_id == vendor_id)
+    if date:
+        try:
+            target_date = datetime.strptime(date, "%Y-%m-%d").date()
+            from datetime import timedelta
+            next_date = target_date + timedelta(days=1)
+            query = query.filter(models.UPITransaction.timestamp >= target_date, models.UPITransaction.timestamp < next_date)
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid date format, use YYYY-MM-DD")
+    
+    return query.order_by(models.UPITransaction.timestamp.desc()).all()
+
 @app.post("/cash-transaction", response_model=UPITransactionResponse)
 def record_cash_transaction(txn: CashTransactionCreate, db: Session = Depends(get_db)):
     db_txn = models.UPITransaction(

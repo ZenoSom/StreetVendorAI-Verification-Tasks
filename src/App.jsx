@@ -14,6 +14,8 @@ function App() {
   const [currentStock, setCurrentStock] = useState("20");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [liveTransactions, setLiveTransactions] = useState([]);
+  const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().split('T')[0]);
+  const [dateTransactions, setDateTransactions] = useState([]);
   const [isSyncing, setIsSyncing] = useState(false);
   const [isOrdering, setIsOrdering] = useState(false);
 
@@ -137,6 +139,19 @@ function App() {
       if (res.ok) setSalesHistory(await res.json());
     } catch (e) { console.error("Sales history error", e); }
   };
+
+  useEffect(() => {
+    if (!vendor) return;
+    const fetchTransactions = async () => {
+      try {
+        const res = await fetch(`/api/transactions/${vendor.id}?date=${selectedDate}`);
+        if (res.ok) {
+          setDateTransactions(await res.json());
+        }
+      } catch (e) { console.error("Failed to fetch date transactions", e); }
+    };
+    fetchTransactions();
+  }, [selectedDate, vendor, liveTransactions]);
 
   // Shared function to update AI insights (used by Manual Entry and Live Sync)
   const refreshAIInsights = async (unitsForFinance) => {
@@ -384,38 +399,49 @@ function App() {
             </button>
           </div>
 
-          {/* UPI Live Sync */}
+          {/* Daily Ledger & Calendar */}
           <div style={{ background: "rgba(59, 130, 246, 0.05)", padding: "16px", borderRadius: "12px", border: "1px solid rgba(59, 130, 246, 0.2)", marginBottom: "20px" }}>
-            <h3 style={{ fontSize: "14px", color: "var(--color-slate-800)", marginBottom: "8px", display: "flex", alignItems: "center", gap: "8px" }}>
-              <span style={{ display: "inline-block", width: "8px", height: "8px", borderRadius: "50%", background: "var(--color-brand-500)", boxShadow: "0 0 8px var(--color-brand-500)" }}></span>
-              Live UPI Sync
-            </h3>
-            <p style={{ fontSize: "12px", color: "var(--color-slate-500)", marginBottom: "12px" }}>Fetch real-time transactions to auto-generate AI insights.</p>
-            <button className="btn-primary" style={{ background: "var(--color-accent-blue)", padding: "10px" }} onClick={handleSyncUPI} disabled={isSyncing}>
-              {isSyncing ? "Syncing with Bank..." : "Fetch New Transactions"}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
+              <h3 style={{ fontSize: "14px", color: "var(--color-slate-800)", display: "flex", alignItems: "center", gap: "8px", margin: 0 }}>
+                <span style={{ display: "inline-block", width: "8px", height: "8px", borderRadius: "50%", background: "var(--color-brand-500)", boxShadow: "0 0 8px var(--color-brand-500)" }}></span>
+                Daily Ledger & Activity
+              </h3>
+              <input type="date" className="input-field" style={{ width: "130px", padding: "4px 8px", fontSize: "12px" }} value={selectedDate} onChange={e => setSelectedDate(e.target.value)} />
+            </div>
+            
+            <p style={{ fontSize: "12px", color: "var(--color-slate-500)", marginBottom: "12px" }}>View historical transactions. Select a date above to scrub back in time.</p>
+
+            <button className="btn-primary" style={{ background: "var(--color-accent-blue)", padding: "8px", width: "100%", fontSize: "12px", marginBottom: "12px" }} onClick={handleSyncUPI} disabled={isSyncing}>
+              {isSyncing ? "Syncing with Bank..." : "Fetch New UPI Transactions (Today)"}
             </button>
 
-            {liveTransactions.length > 0 && (
-              <div style={{ marginTop: "16px", display: "flex", flexDirection: "column", gap: "8px" }}>
-                {liveTransactions.map(txn => (
-                  <div key={txn.transaction_id} style={{ fontSize: "12px", padding: "8px", background: "white", borderRadius: "6px", border: "1px solid var(--border-strong)", display: "flex", justifyContent: "space-between" }}>
-                    <div>
-                      <strong style={{ color: "var(--color-slate-900)" }}>₹{txn.amount}</strong> from {txn.payer_name}
-                      <div style={{ color: "var(--color-slate-500)", fontSize: "10px", marginTop: "2px" }}>{txn.payer_vpa}</div>
-                      {txn.items_sold && (
-                        <div style={{ color: "var(--color-brand-600)", fontSize: "11px", marginTop: "4px", fontWeight: "500" }}>
-                          🛒 {txn.items_sold}
-                        </div>
-                      )}
-                    </div>
-                    <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "8px" }}>
-                      <span style={{ color: "var(--color-brand-600)", fontWeight: "600", fontSize: "10px" }}>{txn.status}</span>
-                      <button onClick={() => { setModalData(txn); setActiveModal("receipt"); }} style={{ padding: "4px 8px", background: "var(--color-slate-100)", border: "1px solid var(--border-light)", borderRadius: "8px", cursor: "pointer", fontSize: "12px" }}>🖨️ Print</button>
-                    </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: "8px", maxHeight: "300px", overflowY: "auto", paddingRight: "4px" }}>
+              {dateTransactions.length > 0 ? dateTransactions.map(txn => (
+                <div key={txn.transaction_id} style={{ fontSize: "12px", padding: "8px", background: "white", borderRadius: "6px", border: "1px solid var(--border-strong)", display: "flex", justifyContent: "space-between" }}>
+                  <div>
+                    <strong style={{ color: "var(--color-slate-900)" }}>₹{txn.amount}</strong> from {txn.payer_name}
+                    <div style={{ color: "var(--color-slate-500)", fontSize: "10px", marginTop: "2px" }}>{txn.payer_vpa}</div>
+                    {txn.items_sold && (
+                      <div style={{ color: "var(--color-brand-600)", fontSize: "11px", marginTop: "4px", fontWeight: "500" }}>
+                        🛒 {txn.items_sold}
+                      </div>
+                    )}
                   </div>
-                ))}
-              </div>
-            )}
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "8px" }}>
+                    <span style={{ color: "var(--color-slate-500)", fontWeight: "500", fontSize: "10px" }}>
+                      {new Date(txn.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                    </span>
+                    <button onClick={() => { setModalData(txn); setActiveModal("receipt"); }} style={{ padding: "4px 8px", background: "var(--color-slate-100)", border: "1px solid var(--border-light)", borderRadius: "8px", cursor: "pointer", fontSize: "12px", display: "flex", gap: "4px", alignItems: "center" }}>
+                      🖨️ Print
+                    </button>
+                  </div>
+                </div>
+              )) : (
+                <div style={{ padding: "20px", textAlign: "center", color: "var(--color-slate-400)", fontSize: "12px", background: "white", borderRadius: "8px", border: "1px dashed var(--border-light)" }}>
+                  No transactions recorded for this date.
+                </div>
+              )}
+            </div>
           </div>
 
           <h3 style={{ fontSize: "14px", color: "var(--color-slate-800)", marginBottom: "12px" }}>Manual Entry</h3>

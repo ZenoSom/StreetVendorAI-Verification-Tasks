@@ -45,10 +45,12 @@ except ImportError:
 # Create database tables
 models.Base.metadata.create_all(bind=engine)
 
+is_vercel = os.getenv("VERCEL") == "1"
 app = FastAPI(
     title="StreetVendorAI API",
     description="AI-powered digital platform for street vendors",
-    version="2.0.0"
+    version="2.0.0",
+    root_path="/api" if is_vercel else ""
 )
 
 app.add_middleware(

@@ -513,8 +513,13 @@ function App() {
                 )}
               </div>
               <p style={{ fontSize: "14px", color: "var(--color-slate-600)", lineHeight: 1.5 }}>
-                Based on your recent sales pattern and {forecast.weather_adjustment_factor > 1 ? "positive" : "normal"} weather conditions, we expect a {forecast.forecast_demand > 100 ? "high" : "steady"} turnout tomorrow.
+                Based on your recent sales pattern and {forecast.weather.demand_multiplier > 1 ? "positive" : "normal"} weather conditions, we expect a {forecast.forecast_demand > 100 ? "high" : "steady"} turnout tomorrow.
               </p>
+              {forecast.weather.actionable_advice && (
+                <div style={{ marginTop: "12px", padding: "12px", background: "var(--color-slate-100)", borderRadius: "8px", borderLeft: "4px solid var(--color-brand-500)", fontSize: "13px", color: "var(--color-slate-800)" }}>
+                  <strong>💡 Weather Advice:</strong> {forecast.weather.actionable_advice}
+                </div>
+              )}
             </div>
           ) : (
             <div className="glass-panel" style={{ marginBottom: "24px", textAlign: "center", padding: "40px" }}>

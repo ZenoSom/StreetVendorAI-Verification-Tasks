@@ -1,4 +1,5 @@
 import urllib.request
+import urllib.parse
 import json
 from datetime import datetime
 from typing import List, Dict, Tuple
@@ -20,54 +21,53 @@ CITY_COORDINATES = {
 
 def fetch_live_weather(location: str) -> Dict[str, any]:
     """
-    Fetches real-time live weather data from Open-Meteo free weather API.
+    Fetches real-time live weather data from OpenWeather API.
     """
-    loc_lower = location.lower()
-    coords = (28.6139, 77.2090)  # Default Delhi
-
-    for city_key, city_coords in CITY_COORDINATES.items():
-        if city_key in loc_lower:
-            coords = city_coords
-            break
-
-    lat, lon = coords
-    url = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current_weather=true"
+    api_key = "dfef7665bac1d521b9f2550a99f5d20d"
+    loc_encoded = urllib.parse.quote(location)
+    url = f"https://api.openweathermap.org/data/2.5/weather?q={loc_encoded}&appid={api_key}&units=metric"
 
     try:
         req = urllib.request.Request(url, headers={"User-Agent": "StreetVendorAI/1.0"})
-        with urllib.request.urlopen(req, timeout=3) as response:
+        with urllib.request.urlopen(req, timeout=5) as response:
             data = json.loads(response.read().decode())
-            current = data.get("current_weather", {})
-            temp = current.get("temperature", 28.0)
-            weather_code = current.get("weathercode", 0)
+            temp = data.get("main", {}).get("temp", 28.0)
+            weather_desc = data.get("weather", [{}])[0].get("main", "Clear")
 
-            # Map WMO weather codes to human text & impact
-            if weather_code in [61, 63, 65, 80, 81, 82]:
+            # Map OpenWeather conditions to human text & impact
+            condition_lower = weather_desc.lower()
+            if "rain" in condition_lower or "drizzle" in condition_lower or "thunderstorm" in condition_lower:
                 condition = "Rainy"
-                multiplier = 0.85  # Rain reduces outdoor cart footfall by ~15%
-            elif weather_code in [1, 2, 3]:
+                multiplier = 0.85  # Rain reduces outdoor cart footfall
+                advice = "🌧️ Rain expected. Bring tarps/umbrellas and consider switching to hot snacks/beverages."
+            elif "clouds" in condition_lower:
                 condition = "Partly Cloudy"
                 multiplier = 1.05
+                advice = "⛅ Pleasant cloudy weather. Normal inventory recommended."
             elif temp > 36.0:
                 condition = "Hot & Sunny"
-                multiplier = 1.12  # Hot weather increases beverage / ice cream demand
+                multiplier = 1.12
+                advice = "🔥 Extreme heat warning! Stock up on cold beverages, ice, and stay shaded."
             else:
                 condition = "Clear / Pleasant"
                 multiplier = 1.08
+                advice = "☀️ Excellent clear weather. High footfall expected!"
 
             return {
-                "temperature_c": temp,
+                "temperature_c": round(temp, 1),
                 "condition": condition,
-                "weather_code": weather_code,
-                "demand_multiplier": multiplier
+                "weather_code": weather_desc,
+                "demand_multiplier": multiplier,
+                "actionable_advice": advice
             }
     except Exception as e:
         print(f"Weather API fallback notice: {e}")
         return {
             "temperature_c": 28.5,
             "condition": "Clear / Pleasant",
-            "weather_code": 0,
-            "demand_multiplier": 1.08
+            "weather_code": "Clear",
+            "demand_multiplier": 1.08,
+            "actionable_advice": "☀️ Standard weather assumed. Normal inventory recommended."
         }
 
 

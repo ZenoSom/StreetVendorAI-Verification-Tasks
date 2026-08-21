@@ -68,3 +68,54 @@ class PurchaseOrder(Base):
 
     vendor: Mapped["Vendor"] = relationship("Vendor", back_populates="orders")
 
+
+class GovernmentScheme(Base):
+    __tablename__ = "government_schemes"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    title: Mapped[str] = mapped_column(String(200), nullable=False)
+    category: Mapped[str] = mapped_column(String(100), nullable=False)
+    description: Mapped[str] = mapped_column(Text, nullable=False)
+    benefit: Mapped[str] = mapped_column(String(200), nullable=False)
+    eligibility_criteria: Mapped[str] = mapped_column(Text, nullable=False)
+    target_business_type: Mapped[str] = mapped_column(String(100), nullable=True) # e.g., 'Food', 'General', 'All'
+    apply_url: Mapped[str] = mapped_column(String(300), nullable=True)
+
+
+class TrainingProgram(Base):
+    __tablename__ = "training_programs"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    title: Mapped[str] = mapped_column(String(200), nullable=False)
+    module_type: Mapped[str] = mapped_column(String(100), nullable=False) # e.g., 'Hygiene', 'Digital Skills'
+    description: Mapped[str] = mapped_column(Text, nullable=False)
+    video_url: Mapped[str] = mapped_column(String(300), nullable=True)
+    duration_mins: Mapped[int] = mapped_column(Integer, default=5)
+
+
+class SupplierCatalog(Base):
+    __tablename__ = "supplier_catalog"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    name: Mapped[str] = mapped_column(String(200), nullable=False)
+    category: Mapped[str] = mapped_column(String(100), nullable=False)
+    location_area: Mapped[str] = mapped_column(String(200), nullable=False)
+    discount_info: Mapped[str] = mapped_column(String(200), nullable=True)
+    contact_number: Mapped[str] = mapped_column(String(20), nullable=True)
+    rating: Mapped[float] = mapped_column(Float, default=4.0)
+
+
+class UPITransaction(Base):
+    __tablename__ = "upi_transactions"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    vendor_id: Mapped[int] = mapped_column(Integer, ForeignKey("vendors.id"), nullable=False)
+    transaction_id: Mapped[str] = mapped_column(String(100), unique=True, index=True, nullable=False)
+    payer_name: Mapped[str] = mapped_column(String(100), nullable=False)
+    payer_vpa: Mapped[str] = mapped_column(String(100), nullable=False)
+    amount: Mapped[float] = mapped_column(Float, nullable=False)
+    items_sold: Mapped[str] = mapped_column(String(200), nullable=True)
+    timestamp: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    status: Mapped[str] = mapped_column(String(50), default="SUCCESS")
+
+    vendor: Mapped["Vendor"] = relationship("Vendor")

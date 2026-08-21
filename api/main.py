@@ -3,6 +3,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from typing import Optional, List
 from datetime import datetime
+import uuid
+import random
+from pydantic import BaseModel
 
 import models
 from database import engine, get_db
@@ -13,9 +16,11 @@ from schemas import (
     FinanceInput, FinanceResponse,
     PurchaseOrderCreate, PurchaseOrderResponse,
     MarketAccessResponse, SchemeItem,
-    DeliveryRequest, DeliveryResponse
+    DeliveryRequest, DeliveryResponse,
+    UPITransactionResponse
 )
 from ml_forecaster import calculate_statistical_forecast, fetch_live_weather
+from vendor_hub import router as vendor_hub_router
 
 # Create database tables
 models.Base.metadata.create_all(bind=engine)
@@ -33,6 +38,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.include_router(vendor_hub_router)
+
 
 
 @app.get("/")
@@ -87,6 +95,97 @@ def get_vendor_by_id(vendor_id: int, db: Session = Depends(get_db)):
     if not v:
         raise HTTPException(status_code=404, detail="Vendor not found")
     return v
+
+
+# ---------------- VENDOR PROFILE API ----------------
+
+class CashTransactionCreate(BaseModel):
+    vendor_id: int
+    amount: float
+    items_sold: str
+
+@app.post("/cash-transaction", response_model=UPITransactionResponse)
+def record_cash_transaction(txn: CashTransactionCreate, db: Session = Depends(get_db)):
+    db_txn = models.UPITransaction(
+        vendor_id=txn.vendor_id,
+        transaction_id=f"CSH{uuid.uuid4().hex[:12].upper()}",
+        payer_name="Walk-in Customer",
+        payer_vpa="CASH",
+        amount=txn.amount,
+        items_sold=txn.items_sold,
+        status="SUCCESS"
+    )
+    db.add(db_txn)
+    db.commit()
+    db.refresh(db_txn)
+    return db_txn
+
+@app.post("/upi/sync/{vendor_id}", response_model=List[UPITransactionResponse])
+def sync_live_upi_transactions(vendor_id: int, db: Session = Depends(get_db)):
+    # Sandbox Simulation: Generate 1 to 3 random UPI transactions
+    v = db.query(models.Vendor).filter(models.Vendor.id == vendor_id).first()
+    if not v:
+        raise HTTPException(status_code=404, detail="Vendor not found")
+
+    names = ["Rahul", "Priya", "Amit", "Sneha", "Vikram", "Anjali"]
+    banks = ["okicici", "okhdfcbank", "oksbi", "paytm", "apl"]
+    
+    num_txns = random.randint(1, 3)
+    new_txns = []
+    total_amount = 0.0
+    
+    for _ in range(num_txns):
+        # 10% chance of a bulk catering order between ₹1000 and ₹10000
+        if random.random() < 0.1:
+            amount = float(random.randint(1000, 10000))
+        else:
+            amount = random.choice([20.0, 30.0, 50.0, 100.0, 150.0])
+            
+        payer = random.choice(names)
+        bank = random.choice(banks)
+        vendor_products = [p.strip() for p in v.products.split(",")] if v.products else ["Item"]
+        
+        if amount >= 1000:
+            items_str = f"Bulk Catering Order: {random.randint(50, 200)}x {random.choice(vendor_products)}"
+        else:
+            # Pick 1 or 2 random products and a random quantity for each
+            selected_products = random.sample(vendor_products, k=random.randint(1, min(2, len(vendor_products))))
+            items_list = [f"{random.randint(1, 3)}x {p}" for p in selected_products]
+            items_str = ", ".join(items_list)
+
+        txn = models.UPITransaction(
+            vendor_id=vendor_id,
+            transaction_id=f"UPI{uuid.uuid4().hex[:12].upper()}",
+            payer_name=payer,
+            payer_vpa=f"{payer.lower()}@{bank}",
+            amount=amount,
+            items_sold=items_str,
+            status="SUCCESS"
+        )
+        db.add(txn)
+        new_txns.append(txn)
+        total_amount += amount
+    
+    db.commit()
+    
+    # Auto-log a SaleRecord covering these transactions
+    if total_amount > 0:
+        weather_info = fetch_live_weather(v.location)
+        auto_sale = models.SaleRecord(
+            vendor_id=vendor_id,
+            units_sold=num_txns * 2.0, # Approximate units based on txns
+            revenue_amount=total_amount,
+            weather_condition=weather_info["condition"],
+            temperature_c=weather_info["temperature_c"],
+            is_auto_recorded=True
+        )
+        db.add(auto_sale)
+        db.commit()
+
+    for txn in new_txns:
+        db.refresh(txn)
+
+    return new_txns
 
 
 # ---------------- SALES RECORDS & ML FORECASTING API ----------------

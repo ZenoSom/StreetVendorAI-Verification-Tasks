@@ -140,3 +140,57 @@ class DeliveryResponse(BaseModel):
     voice_script: Optional[str] = None
 
 
+class GovernmentSchemeResponse(BaseModel):
+    id: int
+    title: str
+    category: str
+    description: str
+    benefit: str
+    eligibility_criteria: str
+    target_business_type: Optional[str] = None
+    apply_url: Optional[str] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class TrainingProgramResponse(BaseModel):
+    id: int
+    title: str
+    module_type: str
+    description: str
+    video_url: Optional[str] = None
+    duration_mins: int
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class SupplierCatalogResponse(BaseModel):
+    id: int
+    name: str
+    category: str
+    location_area: str
+    discount_info: Optional[str] = None
+    contact_number: Optional[str] = None
+    rating: float
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class LicenseGuideResponse(BaseModel):
+    vendor_id: int
+    missing_licenses: List[str]
+    guide_steps: List[str]
+
+
+class UPITransactionResponse(BaseModel):
+    id: int
+    vendor_id: int
+    transaction_id: str
+    payer_name: str
+    payer_vpa: str
+    amount: float
+    items_sold: Optional[str] = None
+    timestamp: datetime
+    status: str
+
+    model_config = ConfigDict(from_attributes=True)
